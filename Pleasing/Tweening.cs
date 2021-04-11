@@ -121,20 +121,20 @@ namespace Pleasing
 #if STRIDE
 		private const string POSITION = "Position";
 		private const string ROTATION = "Rotation";
+        private const float FromSeconds = 1000f;
 
 		public static void TweenMove(this TransformComponent transform, Vector3 destination, float duration, 
 			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
 		{
-			Tween(transform, POSITION, destination, duration, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay, onComplete);
+			Tween(transform, POSITION, destination, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
 		}
         
         public static void TweenRotate(this TransformComponent transform, Quaternion finalRotation, float duration, 
             EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
         {
-            Tween(transform, ROTATION, finalRotation, duration, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Quaternion, delay, onComplete);
+            Tween(transform, ROTATION, finalRotation, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
         }
         
-
 		private static EasingFunction GetEasingFunction(EasingType easingType)
 		{
 			switch (easingType)
@@ -368,7 +368,7 @@ namespace Pleasing
             if(AdaptiveDuration)
             {
 #if STRIDE
-                elapsedMilliseconds += (float)gameTime.Elapsed.TotalMilliseconds;
+                elapsedMilliseconds += (float)gameTime.Elapsed.Milliseconds;
 #else
                 elapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
 #endif
@@ -396,7 +396,7 @@ namespace Pleasing
             else if (State == TweenState.Running)
             {
 #if STRIDE
-                elapsedMilliseconds += (float)gameTime.Elapsed.TotalMilliseconds;
+                elapsedMilliseconds += (float)gameTime.Elapsed.Milliseconds;
 #else
                 elapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
 #endif
