@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Authors>FrankN326</Authors>
-    <PackageId>FrankNorton.Pleasing</PackageId>
-    <Description>Pleasing is a flexible and fast easing and tweening library. 31 built-int easings are available, or build your own with the custom bezier function. Tween individual values or groups and plan multiple tweens using a timeline. Includes monogame support.</Description>
-    <PackageProjectUrl>https://github.com/Saliken/Pleasing</PackageProjectUrl>
+    <Authors>FrankN326, JoshFlash</Authors>
+    <PackageId>JoshFlash.Pleasing</PackageId>
+    <Description>Pleasing is a flexible and fast easing and tweening library. 31 built-int easings are available,
+      or build your own with the custom bezier function. Tween individual values or groups and plan multiple 
+      tweens using a timeline. Includes monogame and stride support.</Description>
+    <PackageProjectUrl>https://github.com/JoshFlash/Pleasing</PackageProjectUrl>
     <LangVersion>9</LangVersion>
     <Company>Tattva</Company>
     <TargetFramework>net5.0</TargetFramework>

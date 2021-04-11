@@ -1,6 +1,9 @@
 ﻿
 #if MONOGAME
 using Microsoft.Xna.Framework;
+#elif STRIDE
+using Stride.Games;
+using Stride.Core.Mathematics;
 #endif
 
 using System;
@@ -78,7 +81,7 @@ namespace Pleasing
             removeTimelines.Clear();
         }
 
-#if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME
+#if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME || STRIDE
 
         public static void Update(GameTime gameTime)
         {
@@ -211,7 +214,7 @@ namespace Pleasing
         }
 
         
-#if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME
+#if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME || STRIDE
         public TweenableProperty<Vector2> AddVector2(object target, string propertyName)
         {
             return AddProperty(target, propertyName, LerpFunctions.Vector2);
@@ -268,7 +271,12 @@ namespace Pleasing
         {
             if(AdaptiveDuration)
             {
+#if STRIDE
+                elapsedMilliseconds += (float)gameTime.Elapsed.TotalMilliseconds;
+#else
                 elapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+#endif
+                
                 if(State == TweenState.Running)
                 {
                     var propertiesFinished = 0;
@@ -291,7 +299,11 @@ namespace Pleasing
             }
             else if (State == TweenState.Running)
             {
+#if STRIDE
+                elapsedMilliseconds += (float)gameTime.Elapsed.TotalMilliseconds;
+#else
                 elapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+#endif
 
                 if (elapsedMilliseconds >= duration)
                 {
@@ -315,7 +327,8 @@ namespace Pleasing
                 }
             }
         }
-#else
+#endif
+        
         public void Update(float deltaTime)
         {
             if (AdaptiveDuration)
@@ -367,7 +380,6 @@ namespace Pleasing
                 }
             }
         }
-#endif
     }
 
     public interface ITweenableProperty
@@ -539,6 +551,20 @@ namespace Pleasing
                 var height = s.Height + (e.Height - s.Height) * p;
                 return new Microsoft.Xna.Framework.Rectangle((int)pX, (int)pY, (int)width, (int)height);
             };
+#elif STRIDE
+        public static readonly LerpFunction<Vector2>    Vector2     = Stride.Core.Mathematics.Vector2.Lerp;
+        public static readonly LerpFunction<Vector3>    Vector3     = Stride.Core.Mathematics.Vector3.Lerp;
+        public static readonly LerpFunction<Vector4>    Vector4     = Stride.Core.Mathematics.Vector4.Lerp;
+        public static readonly LerpFunction<Color>      Color       = Stride.Core.Mathematics.Color.Lerp;
+        public static readonly LerpFunction<Quaternion> Quaternion  = Stride.Core.Mathematics.Quaternion.Lerp;
+        public static readonly LerpFunction<Rectangle>  Rectangle   = (s, e, p) =>
+        {
+            var pX = s.X + (e.X - s.X) * p;
+            var pY = s.Y + (e.Y - s.Y) * p;
+            var width = s.Width + (e.Width - s.Width) * p;
+            var height = s.Height + (e.Height - s.Height) * p;
+            return new Stride.Core.Mathematics.Rectangle((int)pX, (int)pY, (int)width, (int)height);
+        };  
 #endif
     }
 
