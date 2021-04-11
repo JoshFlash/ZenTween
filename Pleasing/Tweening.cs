@@ -27,15 +27,19 @@ namespace Pleasing
     public static class Tweening
     {
         private static List<TweenTimeline> timelines;
+        private static Queue<TweenTimeline> timelinesQueue;
 
         //For one-off tweens
         private static List<TweenTimeline> singleTimelines;
+        private static Queue<TweenTimeline> singleTimelinesQueue;
         private static List<TweenTimeline> removeTimelines;
 
         static Tweening()
         {
             timelines = new List<TweenTimeline>();
+            timelinesQueue = new Queue<TweenTimeline>();
             singleTimelines = new List<TweenTimeline>();
+            singleTimelinesQueue = new Queue<TweenTimeline>();
             removeTimelines = new List<TweenTimeline>();
         }
 
@@ -57,14 +61,14 @@ namespace Pleasing
                 property.AddFrame(delay, property.initialValue, Easing.Linear);
             }
             property.AddFrame(duration, value, easingFunction);
-            singleTimelines.Add(timeline);
+            singleTimelinesQueue.Enqueue(timeline);
         }
 
         public static TweenTimeline NewTimeline()
         {
             var timeline = new TweenTimeline(0);
             timeline.AdaptiveDuration = true;
-            timelines.Add(timeline);
+            timelinesQueue.Enqueue(timeline);
             return timeline;
         }
         /// <summary>
@@ -76,7 +80,7 @@ namespace Pleasing
         public static TweenTimeline NewTimeline(float duration)
         {
             var timeline = new TweenTimeline(duration);
-            timelines.Add(timeline);
+            timelinesQueue.Enqueue(timeline);
             return timeline;
         }
 
@@ -85,23 +89,36 @@ namespace Pleasing
             timelines.Clear();
             singleTimelines.Clear();
             removeTimelines.Clear();
+            
+            timelinesQueue.Clear();
+            singleTimelinesQueue.Clear();
         }
 
 #if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME || STRIDE
 
         public static void Update(GameTime gameTime)
         {
+            while (timelinesQueue.Count > 0)
+            {
+                timelines.Add(timelinesQueue.Dequeue());
+            }
+            while (singleTimelinesQueue.Count > 0)
+            {
+                singleTimelines.Add(singleTimelinesQueue.Dequeue());
+            }
+            
             foreach (var timeline in timelines)
             {
                 timeline.Update(gameTime);
             }
-
+            
             foreach (var timeline in singleTimelines)
             {
                 timeline.Update(gameTime);
                 if (timeline.State == TweenState.Stopped)
                     removeTimelines.Add(timeline);
             }
+            
             foreach(var timeline in removeTimelines)
             {
                 singleTimelines.Remove(timeline);
@@ -112,6 +129,10 @@ namespace Pleasing
 
         public static void Update(float deltaTime)
         {
+            while (timelinesQueue.Count > 0)
+            {
+                timelines.Add(timelinesQueue.Dequeue());
+            }
             foreach(var timeline in timelines)
             {
                 timeline.Update(deltaTime);
