@@ -2,44 +2,46 @@ using System;
 #if STRIDE
 using Stride.Core.Mathematics;
 using Stride.Engine;
+
 #endif
 
 namespace Pleasing
 {
-	
 	public static partial class Tweening
 	{
 #if STRIDE
 		private const string POSITION = "Position";
 		private const string ROTATION = "Rotation";
 		private const string SCALE = "Scale";
-        private const float FromSeconds = 1000f;
+		private const float FromSeconds = 1000f;
 
-		public static void TweenMove(this TransformComponent transform, Vector3 destination, float duration, 
+		public static void TweenMove(this TransformComponent transform, Vector3 destination, float duration,
 			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
 		{
 			Tween(transform, POSITION, destination, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
 		}
-        
-		public static void TweenLoopMove(this TransformComponent transform, Vector3 destination, float duration, 
-			EasingType easingTypeIn = EasingType.SinusoidalInOut, EasingType easingTypeOut = EasingType.SinusoidalInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
+
+		public static void TweenLoopMove(this TransformComponent transform, Vector3 destination, float duration,
+			EasingType easingTypeIn = EasingType.SinusoidalInOut, EasingType easingTypeOut = EasingType.SinusoidalInOut, float delay = 0, System.Action onComplete = null,
+			LerpFunction<Vector3> lerpFunction = null)
 		{
-			TweenLoop(transform, POSITION, destination, duration * FromSeconds, GetEasingFunction(easingTypeIn), GetEasingFunction(easingTypeOut), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
+			TweenLoop(transform, POSITION, destination, duration * FromSeconds, GetEasingFunction(easingTypeIn), GetEasingFunction(easingTypeOut), lerpFunction ?? LerpFunctions.Vector3,
+				delay * FromSeconds, onComplete);
 		}
-        
-        public static void TweenRotate(this TransformComponent transform, Quaternion finalRotation, float duration, 
-            EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
-        {
-            Tween(transform, ROTATION, finalRotation, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
-        }
-        
-        public static void TweenScale(this TransformComponent transform, Vector3 scale, float duration, 
-            EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
-        {
-            Tween(transform, SCALE, scale, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
-        }
+
+		public static void TweenRotate(this TransformComponent transform, Quaternion finalRotation, float duration,
+			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
+		{
+			Tween(transform, ROTATION, finalRotation, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
+		}
+
+		public static void TweenScale(this TransformComponent transform, Vector3 scale, float duration,
+			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
+		{
+			Tween(transform, SCALE, scale, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
+		}
 #endif
-        
+
 		private static EasingFunction GetEasingFunction(EasingType easingType)
 		{
 			switch (easingType)
@@ -112,5 +114,4 @@ namespace Pleasing
 			}
 		}
 	}
-	
 }
