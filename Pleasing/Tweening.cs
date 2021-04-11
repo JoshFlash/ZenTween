@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 #elif STRIDE
 using Stride.Games;
 using Stride.Core.Mathematics;
+using Stride.Engine;
 #endif
 
 using System;
@@ -46,11 +47,16 @@ namespace Pleasing
         /// <param name="endTime">The time, in milliseconds when the tween will end.</param>
         /// <param name="startTime">The time in milliseconds when the tween will begin.</param>
         /// <returns>A TweenTimeline with a tween attached.</returns>
-        public static void Tween<T>(object target, string propertyName, T value, float duration, EasingFunction easingFunction, LerpFunction<T> lerpFunction, float delay = 0)
+        public static void Tween<T>(object target, string propertyName, T value, float duration, EasingFunction easingFunction, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
         {
             var timeline = new TweenTimeline();
-            var property = timeline.AddProperty<T>(target, propertyName, lerpFunction);
-            property.AddFrame(duration, value);
+            var property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
+            if (delay > 0)
+            {
+                duration += delay;
+                property.AddFrame(delay, property.initialValue, Easing.Linear);
+            }
+            property.AddFrame(duration, value, easingFunction);
             singleTimelines.Add(timeline);
         }
 
@@ -111,6 +117,96 @@ namespace Pleasing
                 timeline.Update(deltaTime);
             }
         }
+        
+#if STRIDE
+		private const string POSITION = "Position";
+		private const string ROTATION = "Rotation";
+
+		public static void TweenMove(this TransformComponent transform, Vector3 destination, float duration, 
+			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
+		{
+			Tween(transform, POSITION, destination, duration, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay, onComplete);
+		}
+        
+        public static void TweenRotate(this TransformComponent transform, Quaternion finalRotation, float duration, 
+            EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
+        {
+            Tween(transform, ROTATION, finalRotation, duration, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Quaternion, delay, onComplete);
+        }
+        
+
+		private static EasingFunction GetEasingFunction(EasingType easingType)
+		{
+			switch (easingType)
+			{
+				case EasingType.Linear:
+					return Easing.Linear;
+				case EasingType.QuadraticIn:
+					return Easing.Quadratic.In;
+				case EasingType.QuadraticOut:
+					return Easing.Quadratic.Out;
+				case EasingType.QuadraticInOut:
+					return Easing.Quadratic.InOut;
+				case EasingType.CubicIn:
+					return Easing.Cubic.In;
+				case EasingType.CubicOut:
+					return Easing.Cubic.Out;
+				case EasingType.CubicInOut:
+					return Easing.Cubic.InOut;
+				case EasingType.QuarticIn:
+					return Easing.Quartic.In;
+				case EasingType.QuarticOut:
+					return Easing.Quartic.Out;
+				case EasingType.QuarticInOut:
+					return Easing.Quartic.InOut;
+				case EasingType.QuinticIn:
+					return Easing.Quintic.In;
+				case EasingType.QuinticOut:
+					return Easing.Quintic.Out;
+				case EasingType.QuinticInOut:
+					return Easing.Quintic.InOut;
+				case EasingType.SinusoidalIn:
+					return Easing.Sinusoidal.In;
+				case EasingType.SinusoidalOut:
+					return Easing.Sinusoidal.Out;
+				case EasingType.SinusoidalInOut:
+					return Easing.Sinusoidal.InOut;
+				case EasingType.ExponentialIn:
+					return Easing.Exponential.In;
+				case EasingType.ExponentialOut:
+					return Easing.Exponential.Out;
+				case EasingType.ExponentialInOut:
+					return Easing.Exponential.InOut;
+				case EasingType.CircularIn:
+					return Easing.Circular.In;
+				case EasingType.CircularOut:
+					return Easing.Circular.Out;
+				case EasingType.CircularInOut:
+					return Easing.Circular.InOut;
+				case EasingType.ElasticIn:
+					return Easing.Elastic.In;
+				case EasingType.ElasticOut:
+					return Easing.Elastic.Out;
+				case EasingType.ElasticInOut:
+					return Easing.Elastic.InOut;
+				case EasingType.BackIn:
+					return Easing.Back.In;
+				case EasingType.BackOut:
+					return Easing.Back.Out;
+				case EasingType.BackInOut:
+					return Easing.Back.InOut;
+				case EasingType.BounceIn:
+					return Easing.Bounce.In;
+				case EasingType.BounceOut:
+					return Easing.Bounce.Out;
+				case EasingType.BounceInOut:
+					return Easing.Bounce.InOut;
+				case EasingType.Bezier:
+				default:
+					throw new ArgumentException($"No Easing Functioned defined for Type: {easingType}");
+			}
+		}
+#endif
     }
 
     /// <summary>
@@ -168,7 +264,7 @@ namespace Pleasing
             }
         }
 
-        public TweenableProperty<T> AddProperty<T>(object target, string propertyName, LerpFunction<T> lerpFunction)
+        public TweenableProperty<T> AddProperty<T>(object target, string propertyName, LerpFunction<T> lerpFunction, Action onComplete)
         {
             var properties = target.GetType().GetProperties();
             var fields = target.GetType().GetFields();
@@ -178,7 +274,7 @@ namespace Pleasing
             {
                 if (property.PropertyType == typeof(T))
                 {
-                    var t = new TweenProperty<T>(target, property, lerpFunction);
+                    var t = new TweenProperty<T>(target, property, lerpFunction, onComplete);
                     tweeningProperties.Add(t);
                     return t;
                 }
@@ -190,7 +286,7 @@ namespace Pleasing
                 {
                     if (field.FieldType == typeof(T))
                     {
-                        var t = new TweenField<T>(target, field, lerpFunction);
+                        var t = new TweenField<T>(target, field, lerpFunction, onComplete);
                         tweeningProperties.Add(t);
                         return t;
                     }
@@ -200,7 +296,7 @@ namespace Pleasing
         }
         public TweenableProperty<float> AddFloat(object target, string propertyName) 
         {
-            return AddProperty(target, propertyName, LerpFunctions.Float);
+            return AddProperty(target, propertyName, LerpFunctions.Float, null);
         }
         public TweenableProperty<float> AddFloat(float initialValue, Action<float> setter)
         {
@@ -215,29 +311,29 @@ namespace Pleasing
 
         
 #if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME || STRIDE
-        public TweenableProperty<Vector2> AddVector2(object target, string propertyName)
+        public TweenableProperty<Vector2> AddVector2(object target, string propertyName, Action onComplete)
         {
-            return AddProperty(target, propertyName, LerpFunctions.Vector2);
+            return AddProperty(target, propertyName, LerpFunctions.Vector2, onComplete);
         }
-        public TweenableProperty<Vector3> AddVector3(object target, string propertyName)
+        public TweenableProperty<Vector3> AddVector3(object target, string propertyName, Action onComplete)
         {
-            return AddProperty(target, propertyName, LerpFunctions.Vector3);
+            return AddProperty(target, propertyName, LerpFunctions.Vector3, onComplete);
         }
-        public TweenableProperty<Vector4> AddVector4(object target, string propertyName)
+        public TweenableProperty<Vector4> AddVector4(object target, string propertyName, Action onComplete)
         {
-            return AddProperty(target, propertyName, LerpFunctions.Vector4);
+            return AddProperty(target, propertyName, LerpFunctions.Vector4, onComplete);
         }
-        public TweenableProperty<Color> AddColor(object target, string propertyName)
+        public TweenableProperty<Color> AddColor(object target, string propertyName, Action onComplete)
         {
-            return AddProperty(target, propertyName, LerpFunctions.Color);
+            return AddProperty(target, propertyName, LerpFunctions.Color, onComplete);
         }
-        public TweenableProperty<Quaternion> AddQuaternion(object target, string propertyName)
+        public TweenableProperty<Quaternion> AddQuaternion(object target, string propertyName, Action onComplete)
         {
-            return AddProperty(target, propertyName, LerpFunctions.Quaternion);
+            return AddProperty(target, propertyName, LerpFunctions.Quaternion, onComplete);
         }
-        public TweenableProperty<Rectangle> AddRectangle(object target, string propertyName)
+        public TweenableProperty<Rectangle> AddRectangle(object target, string propertyName, Action onComplete)
         {
-            return AddProperty(target, propertyName, LerpFunctions.Rectangle);
+            return AddProperty(target, propertyName, LerpFunctions.Rectangle, onComplete);
         }
 
         
@@ -389,7 +485,8 @@ namespace Pleasing
     }
     public abstract class TweenableProperty<T> : ITweenableProperty
     {
-        protected T initialValue;
+        public T initialValue { get; protected init; }
+        protected Action onComplete { get; init; }
         protected List<TweenKeyFrame<T>> keyFrames;
         protected LerpFunction<T> lerpFunction;
         protected bool Done;
@@ -431,10 +528,14 @@ namespace Pleasing
 
             if(nextFrame == null)
             {
-                if(!Done)
+                if (!Done)
+                {
                     SetValue(lastFrame.value);
+                    onComplete?.Invoke();
+                }
 
                 Done = true;
+                
                 return false;
             }
             else
@@ -471,11 +572,12 @@ namespace Pleasing
         public object target;
         public PropertyInfo property;
 
-        public TweenProperty(object target, PropertyInfo property, LerpFunction<T> lerpFunction)
+        public TweenProperty(object target, PropertyInfo property, LerpFunction<T> lerpFunction, Action onComplete)
             :base(lerpFunction)
         {
             this.target = target;
             this.property = property;
+            this.onComplete = onComplete;
             initialValue = (T)property.GetValue(target);
         }
         
@@ -489,11 +591,12 @@ namespace Pleasing
         public object target;
         public FieldInfo field;
 
-        public TweenField(object target, FieldInfo field, LerpFunction<T> lerpFunction)
+        public TweenField(object target, FieldInfo field, LerpFunction<T> lerpFunction, Action onComplete)
             :base(lerpFunction)
         {
             this.target = target;
             this.field = field;
+            this.onComplete = onComplete;
             initialValue = (T)field.GetValue(target);
         }
         
