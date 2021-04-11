@@ -10,6 +10,7 @@
     <LangVersion>9</LangVersion>
     <Company>Tattva</Company>
     <TargetFramework>net5.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
 </Project>
