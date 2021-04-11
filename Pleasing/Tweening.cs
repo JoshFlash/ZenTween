@@ -23,8 +23,8 @@ namespace Pleasing
 
     /// <summary>
     /// The entry point for tweens. Call Tweening.Update() once per frame.
-    /// </summary>
-    public static class Tweening
+    /// </summary> 
+    public static partial class Tweening
     {
         private static List<TweenTimeline> timelines;
         private static Queue<TweenTimeline> timelinesQueue;
@@ -46,10 +46,12 @@ namespace Pleasing
         /// <summary>
         /// Creates a new tween and timeline.
         /// </summary>
-        /// <param name="obj">The object to tween.</param>
+        /// <param name="target">The object to tween.</param>
+        /// <param name="value">The value of the tween property at the end of the tween</param>
+        /// <param name="duration">The time, in milliseconds when the tween will last.</param>
         /// <param name="easingFunction">The easing function to use. (e.g. Easing.Linear)</param>
-        /// <param name="endTime">The time, in milliseconds when the tween will end.</param>
-        /// <param name="startTime">The time in milliseconds when the tween will begin.</param>
+        /// <param name="delay">A timed delay before the start of the tween</param>
+        /// <param name="onComplete">A callback executed when the tween has completed</param>
         /// <returns>A TweenTimeline with a tween attached.</returns>
         public static void Tween<T>(object target, string propertyName, T value, float duration, EasingFunction easingFunction, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
         {
@@ -61,6 +63,34 @@ namespace Pleasing
                 property.AddFrame(delay, property.initialValue, Easing.Linear);
             }
             property.AddFrame(duration, value, easingFunction);
+            singleTimelinesQueue.Enqueue(timeline);
+        }
+
+        /// <summary>
+        /// Creates a new tween and looped timeline.
+        /// </summary>
+        /// <param name="target">The object to tween.</param>
+        /// <param name="value">The value of the tween property at the apex of the loop</param>
+        /// <param name="duration">The time, in milliseconds when the tween will last.</param>
+        /// <param name="easingFunctionIn">The easing function to use in the first half of the loop. (e.g. Easing.Cubic.In)</param>
+        /// <param name="easingFunctionOut">The easing function to use in the second half of the loop. (e.g. Easing.Cubic.Out)</param>
+        /// <param name="delay">A timed delay before the start of each loop</param>
+        /// <param name="onComplete">A callback executed when the loop has completed</param>
+        /// <returns>A looped TweenTimeline with a tween attached.</returns>
+        public static void TweenLoop<T>(object target, string propertyName, T value, float duration, EasingFunction easingFunctionIn,  EasingFunction easingFunctionOut, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
+        {
+            var timeline = new TweenTimeline();
+            TweenableProperty<T> property;
+            if (delay > 0)
+            {
+                duration += delay;
+                property = timeline.AddProperty<T>(target, propertyName, lerpFunction, null);
+                property.AddFrame(delay, property.initialValue, Easing.Linear);
+            }
+            property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
+            property.AddFrame(duration / 2f, value, easingFunctionIn);
+            property.AddFrame(duration, property.initialValue, easingFunctionOut);
+            timeline.Loop = true;
             singleTimelinesQueue.Enqueue(timeline);
         }
 
@@ -138,96 +168,6 @@ namespace Pleasing
                 timeline.Update(deltaTime);
             }
         }
-        
-#if STRIDE
-		private const string POSITION = "Position";
-		private const string ROTATION = "Rotation";
-        private const float FromSeconds = 1000f;
-
-		public static void TweenMove(this TransformComponent transform, Vector3 destination, float duration, 
-			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
-		{
-			Tween(transform, POSITION, destination, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
-		}
-        
-        public static void TweenRotate(this TransformComponent transform, Quaternion finalRotation, float duration, 
-            EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
-        {
-            Tween(transform, ROTATION, finalRotation, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
-        }
-        
-		private static EasingFunction GetEasingFunction(EasingType easingType)
-		{
-			switch (easingType)
-			{
-				case EasingType.Linear:
-					return Easing.Linear;
-				case EasingType.QuadraticIn:
-					return Easing.Quadratic.In;
-				case EasingType.QuadraticOut:
-					return Easing.Quadratic.Out;
-				case EasingType.QuadraticInOut:
-					return Easing.Quadratic.InOut;
-				case EasingType.CubicIn:
-					return Easing.Cubic.In;
-				case EasingType.CubicOut:
-					return Easing.Cubic.Out;
-				case EasingType.CubicInOut:
-					return Easing.Cubic.InOut;
-				case EasingType.QuarticIn:
-					return Easing.Quartic.In;
-				case EasingType.QuarticOut:
-					return Easing.Quartic.Out;
-				case EasingType.QuarticInOut:
-					return Easing.Quartic.InOut;
-				case EasingType.QuinticIn:
-					return Easing.Quintic.In;
-				case EasingType.QuinticOut:
-					return Easing.Quintic.Out;
-				case EasingType.QuinticInOut:
-					return Easing.Quintic.InOut;
-				case EasingType.SinusoidalIn:
-					return Easing.Sinusoidal.In;
-				case EasingType.SinusoidalOut:
-					return Easing.Sinusoidal.Out;
-				case EasingType.SinusoidalInOut:
-					return Easing.Sinusoidal.InOut;
-				case EasingType.ExponentialIn:
-					return Easing.Exponential.In;
-				case EasingType.ExponentialOut:
-					return Easing.Exponential.Out;
-				case EasingType.ExponentialInOut:
-					return Easing.Exponential.InOut;
-				case EasingType.CircularIn:
-					return Easing.Circular.In;
-				case EasingType.CircularOut:
-					return Easing.Circular.Out;
-				case EasingType.CircularInOut:
-					return Easing.Circular.InOut;
-				case EasingType.ElasticIn:
-					return Easing.Elastic.In;
-				case EasingType.ElasticOut:
-					return Easing.Elastic.Out;
-				case EasingType.ElasticInOut:
-					return Easing.Elastic.InOut;
-				case EasingType.BackIn:
-					return Easing.Back.In;
-				case EasingType.BackOut:
-					return Easing.Back.Out;
-				case EasingType.BackInOut:
-					return Easing.Back.InOut;
-				case EasingType.BounceIn:
-					return Easing.Bounce.In;
-				case EasingType.BounceOut:
-					return Easing.Bounce.Out;
-				case EasingType.BounceInOut:
-					return Easing.Bounce.InOut;
-				case EasingType.Bezier:
-				default:
-					throw new ArgumentException($"No Easing Functioned defined for Type: {easingType}");
-			}
-		}
-#endif
     }
 
     /// <summary>
