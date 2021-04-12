@@ -74,6 +74,16 @@ namespace Pleasing
         {
             var timeline = new TweenTimeline();
             var property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
+
+            // TODO handle init value mismatch elegantly
+            /*if (property.initialValue is IComparable<T> initC)
+            {
+                if (initC.CompareTo(keyFrameOut.value) != 0)
+                {
+                    var firstFrame = new TweenKeyFrame<T>(keyFrameOut.frame - keyFrameIn.frame, keyFrameOut.value, keyFrameOut.easingFunction);
+                    Tween(target, propertyName, firstFrame, lerpFunction);
+                }
+            }*/
             if (delay > 0)
             {
                 property.AddFrame(new TweenKeyFrame<T>(0, keyFrameOut.value, Easing.Linear));
