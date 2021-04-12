@@ -55,11 +55,8 @@ namespace Pleasing
         {
             var timeline = new TweenTimeline();
             var property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
-            if (delay > 0)
-            {
-                keyFrame.frame += delay;
-                property.AddFrame(new TweenKeyFrame<T>(delay, property.initialValue, Easing.Linear));
-            }
+            keyFrame.frame += delay;
+            property.AddFrame(new TweenKeyFrame<T>(delay, property.initialValue, Easing.Linear));
             property.AddFrame(keyFrame);
             singleTimelinesQueue.Enqueue(timeline);
         }
@@ -76,29 +73,16 @@ namespace Pleasing
         public static void TweenLoop<T>(object target, string propertyName, TweenKeyFrame<T> keyFrameIn, TweenKeyFrame<T> keyFrameOut, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
         {
             var timeline = new TweenTimeline();
-            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
-            if (!property.initialValue.Equals(keyFrameOut.value))
+            var property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
+            if (delay > 0)
             {
-                // add one-off timeline to being loop
-                var firstRunTimeline = new TweenTimeline();
-                Action firstRunComplete = () =>
-                {
-                    property.AddFrame(new TweenKeyFrame<T>(delay, keyFrameOut.value, Easing.Linear));
-                };
-                firstRunComplete += onComplete;
-                TweenableProperty<T> firstRun = firstRunTimeline.AddProperty<T>(target, propertyName, lerpFunction, firstRunComplete);
-                firstRun.AddFrame(new TweenKeyFrame<T>(delay + keyFrameIn.frame, keyFrameIn.value, keyFrameIn.easingFunction));
-                firstRun.AddFrame(new TweenKeyFrame<T>(delay + keyFrameOut.frame, keyFrameOut.value, keyFrameOut.easingFunction));
-                singleTimelinesQueue.Enqueue(firstRunTimeline);
+                property.AddFrame(new TweenKeyFrame<T>(0, keyFrameOut.value, Easing.Linear));
             }
-            else
-            {
-                property.AddFrame(new TweenKeyFrame<T>(delay, keyFrameOut.value, Easing.Linear));
-            }
+            property.AddFrame(new TweenKeyFrame<T>(delay, keyFrameOut.value, Easing.Linear));
             property.AddFrame(new TweenKeyFrame<T>(delay + keyFrameIn.frame, keyFrameIn.value, keyFrameIn.easingFunction));
             property.AddFrame(new TweenKeyFrame<T>(delay + keyFrameOut.frame, keyFrameOut.value, keyFrameOut.easingFunction));
             timeline.Loop = true;
-            
+        
             singleTimelinesQueue.Enqueue(timeline);
         }
 
