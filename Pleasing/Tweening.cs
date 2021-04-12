@@ -47,22 +47,20 @@ namespace Pleasing
         /// Creates a new tween and timeline.
         /// </summary>
         /// <param name="target">The object to tween.</param>
-        /// <param name="value">The value of the tween property at the end of the tween</param>
-        /// <param name="duration">The time, in milliseconds when the tween will last.</param>
-        /// <param name="easingFunction">The easing function to use. (e.g. Easing.Linear)</param>
+        /// <param name="keyFrame">the value, duration, and easing of the tween</param>
         /// <param name="delay">A timed delay before the start of the tween</param>
         /// <param name="onComplete">A callback executed when the tween has completed</param>
         /// <returns>A TweenTimeline with a tween attached.</returns>
-        public static void Tween<T>(object target, string propertyName, T value, float duration, EasingFunction easingFunction, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
+        public static void Tween<T>(object target, string propertyName, TweenKeyFrame<T> keyFrame, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
         {
             var timeline = new TweenTimeline();
             var property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
             if (delay > 0)
             {
-                duration += delay;
-                property.AddFrame(delay, property.initialValue, Easing.Linear);
+                keyFrame.frame += delay;
+                property.AddFrame(new TweenKeyFrame<T>(delay, property.initialValue, Easing.Linear));
             }
-            property.AddFrame(duration, value, easingFunction);
+            property.AddFrame(keyFrame);
             singleTimelinesQueue.Enqueue(timeline);
         }
 
@@ -70,27 +68,37 @@ namespace Pleasing
         /// Creates a new tween and looped timeline.
         /// </summary>
         /// <param name="target">The object to tween.</param>
-        /// <param name="value">The value of the tween property at the apex of the loop</param>
-        /// <param name="duration">The time, in milliseconds when the tween will last.</param>
-        /// <param name="easingFunctionIn">The easing function to use in the first half of the loop. (e.g. Easing.Cubic.In)</param>
-        /// <param name="easingFunctionOut">The easing function to use in the second half of the loop. (e.g. Easing.Cubic.Out)</param>
+        /// <param name="keyFrameIn">the value, duration, and easing of the first half of the tween</param>
+        /// <param name="keyFrameOut">the value, duration, and easing of the second half of the tween</param>
         /// <param name="delay">A timed delay before the start of each loop</param>
         /// <param name="onComplete">A callback executed when the loop has completed</param>
         /// <returns>A looped TweenTimeline with a tween attached.</returns>
-        public static void TweenLoop<T>(object target, string propertyName, T value, float duration, EasingFunction easingFunctionIn,  EasingFunction easingFunctionOut, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
+        public static void TweenLoop<T>(object target, string propertyName, TweenKeyFrame<T> keyFrameIn, TweenKeyFrame<T> keyFrameOut, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
         {
             var timeline = new TweenTimeline();
-            TweenableProperty<T> property;
-            if (delay > 0)
+            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
+            if (!property.initialValue.Equals(keyFrameOut.value))
             {
-                duration += delay;
-                property = timeline.AddProperty<T>(target, propertyName, lerpFunction, null);
-                property.AddFrame(delay, property.initialValue, Easing.Linear);
+                // add one-off timeline to being loop
+                var firstRunTimeline = new TweenTimeline();
+                Action firstRunComplete = () =>
+                {
+                    property.AddFrame(new TweenKeyFrame<T>(delay, keyFrameOut.value, Easing.Linear));
+                };
+                firstRunComplete += onComplete;
+                TweenableProperty<T> firstRun = firstRunTimeline.AddProperty<T>(target, propertyName, lerpFunction, firstRunComplete);
+                firstRun.AddFrame(new TweenKeyFrame<T>(delay + keyFrameIn.frame, keyFrameIn.value, keyFrameIn.easingFunction));
+                firstRun.AddFrame(new TweenKeyFrame<T>(delay + keyFrameOut.frame, keyFrameOut.value, keyFrameOut.easingFunction));
+                singleTimelinesQueue.Enqueue(firstRunTimeline);
             }
-            property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
-            property.AddFrame(duration / 2f, value, easingFunctionIn);
-            property.AddFrame(duration, property.initialValue, easingFunctionOut);
+            else
+            {
+                property.AddFrame(new TweenKeyFrame<T>(delay, keyFrameOut.value, Easing.Linear));
+            }
+            property.AddFrame(new TweenKeyFrame<T>(delay + keyFrameIn.frame, keyFrameIn.value, keyFrameIn.easingFunction));
+            property.AddFrame(new TweenKeyFrame<T>(delay + keyFrameOut.frame, keyFrameOut.value, keyFrameOut.easingFunction));
             timeline.Loop = true;
+            
             singleTimelinesQueue.Enqueue(timeline);
         }
 
@@ -458,14 +466,16 @@ namespace Pleasing
             this.lerpFunction = lerpFunction;
         }
 
-        public TweenableProperty<T> AddFrame(float frame, T value)
+        public TweenableProperty<T> AddFrame(TweenKeyFrame<T> keyFrame)
         {
-            return AddFrame(frame, value, Easing.Linear);
+            keyFrames.Add(keyFrame);
+            keyFrames = keyFrames.OrderBy(x => x.frame).ToList();
+            return this;
         }
-        public TweenableProperty<T> AddFrame(float frame, T value, EasingFunction easingFunction)
+
+        public TweenableProperty<T> RemoveFrame(TweenKeyFrame<T> keyFrame)
         {
-            var newFrame = new TweenKeyFrame<T>(frame, value, easingFunction);
-            keyFrames.Add(newFrame);
+            keyFrames.Remove(keyFrame);
             keyFrames = keyFrames.OrderBy(x => x.frame).ToList();
             return this;
         }

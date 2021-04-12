@@ -18,27 +18,31 @@ namespace Pleasing
 		public static void TweenMove(this TransformComponent transform, Vector3 destination, float duration,
 			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
 		{
-			Tween(transform, POSITION, destination, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
+			var keyFrame = new TweenKeyFrame<Vector3>(duration * FromSeconds, destination, GetEasingFunction(easingType));
+			Tween(transform, POSITION, keyFrame, lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
 		}
-
-		public static void TweenLoopMove(this TransformComponent transform, Vector3 destination, float duration,
+		
+		public static void TweenLoopMove(this TransformComponent transform, Vector3 origin, Vector3 destination, float duration,
 			EasingType easingTypeIn = EasingType.SinusoidalInOut, EasingType easingTypeOut = EasingType.SinusoidalInOut, float delay = 0, System.Action onComplete = null,
 			LerpFunction<Vector3> lerpFunction = null)
 		{
-			TweenLoop(transform, POSITION, destination, duration * FromSeconds, GetEasingFunction(easingTypeIn), GetEasingFunction(easingTypeOut), lerpFunction ?? LerpFunctions.Vector3,
-				delay * FromSeconds, onComplete);
+			var keyFrameIn = new TweenKeyFrame<Vector3>((duration / 2) * FromSeconds, destination, GetEasingFunction(easingTypeIn));
+			var keyFrameOut = new TweenKeyFrame<Vector3>(duration * FromSeconds, origin, GetEasingFunction(easingTypeOut));
+			TweenLoop(transform, POSITION, keyFrameIn, keyFrameOut, lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
 		}
 
-		public static void TweenRotate(this TransformComponent transform, Quaternion finalRotation, float duration,
+		public static void TweenRotate(this TransformComponent transform, Quaternion rotation, float duration,
 			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
 		{
-			Tween(transform, ROTATION, finalRotation, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
+			var keyFrame = new TweenKeyFrame<Quaternion>(duration * FromSeconds, rotation, GetEasingFunction(easingType));
+			Tween(transform, ROTATION, keyFrame, lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
 		}
 
 		public static void TweenScale(this TransformComponent transform, Vector3 scale, float duration,
 			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Vector3> lerpFunction = null)
 		{
-			Tween(transform, SCALE, scale, duration * FromSeconds, GetEasingFunction(easingType), lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
+			var keyFrame = new TweenKeyFrame<Vector3>(duration * FromSeconds, scale, GetEasingFunction(easingType));
+			Tween(transform, SCALE, keyFrame, lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
 		}
 #endif
 
