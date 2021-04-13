@@ -290,14 +290,6 @@ namespace Pleasing
             }
             return null;
         }
-        public TweenableProperty<float> AddFloat(object target, string propertyName) 
-        {
-            return AddProperty(target, propertyName, LerpFunctions.Float, null);
-        }
-        public TweenableProperty<float> AddFloat(float initialValue, Action<float> setter)
-        {
-            return AddProperty(initialValue, setter, LerpFunctions.Float);
-        }
 
         public TweenableProperty<T> AddProperty<T>(T initialValue, Action<T> setter, LerpFunction<T> lerpFunction)
         {
@@ -307,57 +299,6 @@ namespace Pleasing
 
         
 #if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME || STRIDE
-        public TweenableProperty<Vector2> AddVector2(object target, string propertyName, Action onComplete)
-        {
-            return AddProperty(target, propertyName, LerpFunctions.Vector2, onComplete);
-        }
-        public TweenableProperty<Vector3> AddVector3(object target, string propertyName, Action onComplete)
-        {
-            return AddProperty(target, propertyName, LerpFunctions.Vector3, onComplete);
-        }
-        public TweenableProperty<Vector4> AddVector4(object target, string propertyName, Action onComplete)
-        {
-            return AddProperty(target, propertyName, LerpFunctions.Vector4, onComplete);
-        }
-        public TweenableProperty<Color> AddColor(object target, string propertyName, Action onComplete)
-        {
-            return AddProperty(target, propertyName, LerpFunctions.Color, onComplete);
-        }
-        public TweenableProperty<Quaternion> AddQuaternion(object target, string propertyName, Action onComplete)
-        {
-            return AddProperty(target, propertyName, LerpFunctions.Quaternion, onComplete);
-        }
-        public TweenableProperty<Rectangle> AddRectangle(object target, string propertyName, Action onComplete)
-        {
-            return AddProperty(target, propertyName, LerpFunctions.Rectangle, onComplete);
-        }
-
-        
-        public TweenableProperty<Vector2> AddVector2(Vector2 initialValue, Action<Vector2> setter)
-        {
-            return AddProperty(initialValue, setter, LerpFunctions.Vector2);
-        }
-        public TweenableProperty<Vector3> AddVector3(Vector3 initialValue, Action<Vector3> setter)
-        {
-            return AddProperty(initialValue, setter, LerpFunctions.Vector3);
-        }
-        public TweenableProperty<Vector4> AddVector4(Vector4 initialValue, Action<Vector4> setter)
-        {
-            return AddProperty(initialValue, setter, LerpFunctions.Vector4);
-        }
-        public TweenableProperty<Color> AddColor(Color initialValue, Action<Color> setter)
-        {
-            return AddProperty(initialValue, setter, LerpFunctions.Color);
-        }
-        public TweenableProperty<Rectangle> AddRectangle(Rectangle initialValue, Action<Rectangle> setter)
-        {
-            return AddProperty(initialValue, setter, LerpFunctions.Rectangle);
-        }
-        public TweenableProperty<Quaternion> AddQuaternion(Quaternion initialValue, Action<Quaternion> setter)
-        {
-            return AddProperty(initialValue, setter, LerpFunctions.Quaternion);
-        }
-
 
         public void Update(GameTime gameTime)
         {
