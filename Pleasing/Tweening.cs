@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 #elif STRIDE
 using Stride.Games;
 using Stride.Core.Mathematics;
-using Stride.Engine;
 #endif
 
 using System;
@@ -54,10 +53,12 @@ namespace Pleasing
         public static void Tween<T>(object target, string propertyName, TweenKeyFrame<T> keyFrame, LerpFunction<T> lerpFunction, float delay = 0, Action onComplete = null)
         {
             var timeline = new TweenTimeline();
+            
             var property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
             keyFrame.frame += delay;
             property.AddFrame(new TweenKeyFrame<T>(delay, property.initialValue, Easing.Linear));
             property.AddFrame(keyFrame);
+            
             singleTimelinesQueue.Enqueue(timeline);
         }
 
@@ -75,15 +76,6 @@ namespace Pleasing
             var timeline = new TweenTimeline();
             var property = timeline.AddProperty<T>(target, propertyName, lerpFunction, onComplete);
 
-            // TODO handle init value mismatch elegantly
-            /*if (property.initialValue is IComparable<T> initC)
-            {
-                if (initC.CompareTo(keyFrameOut.value) != 0)
-                {
-                    var firstFrame = new TweenKeyFrame<T>(keyFrameOut.frame - keyFrameIn.frame, keyFrameOut.value, keyFrameOut.easingFunction);
-                    Tween(target, propertyName, firstFrame, lerpFunction);
-                }
-            }*/
             if (delay > 0)
             {
                 property.AddFrame(new TweenKeyFrame<T>(0, keyFrameOut.value, Easing.Linear));
@@ -91,8 +83,49 @@ namespace Pleasing
             property.AddFrame(new TweenKeyFrame<T>(delay, keyFrameOut.value, Easing.Linear));
             property.AddFrame(new TweenKeyFrame<T>(delay + keyFrameIn.frame, keyFrameIn.value, keyFrameIn.easingFunction));
             property.AddFrame(new TweenKeyFrame<T>(delay + keyFrameOut.frame, keyFrameOut.value, keyFrameOut.easingFunction));
+            
             timeline.Loop = true;
+            singleTimelinesQueue.Enqueue(timeline);
+        }
         
+        public static void TweenOneShotSequence<T>(object target, string propertyName, TweenSequence<T> sequence)
+        {
+            if (sequence.keyFrames.Count == 0)
+            {
+                sequence.onComplete?.Invoke();
+                return;
+            }
+
+            var timeline = new TweenTimeline();
+
+            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, sequence.lerpFunction, sequence.onComplete);
+            foreach (var keyFrame in sequence.keyFrames)
+            {
+                property.AddFrame(keyFrame);
+            }
+			
+            singleTimelinesQueue.Enqueue(timeline);
+        }
+		
+        public static void TweenLoopSequence<T>(object target, string propertyName, TweenSequence<T> sequence, TweenSequence<T> introSequence = null)
+        {
+
+            if (introSequence != null)
+            {
+                introSequence.onComplete += () => TweenLoopSequence<T>(target, propertyName, sequence, null);
+                TweenOneShotSequence(target, propertyName, introSequence);
+                return;
+            }
+
+            var timeline = new TweenTimeline();
+
+            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, sequence.lerpFunction, sequence.onComplete);
+            foreach (var keyFrame in sequence.keyFrames)
+            {
+                property.AddFrame(keyFrame);
+            }
+			
+            timeline.Loop = true;
             singleTimelinesQueue.Enqueue(timeline);
         }
 
@@ -597,6 +630,20 @@ namespace Pleasing
             this.frame = frame;
             this.value = value;
             this.easingFunction = easingFunction;
+        }
+    }
+
+    public class TweenSequence<T>
+    {
+        public List<TweenKeyFrame<T>> keyFrames = default;
+        public LerpFunction<T> lerpFunction = default;
+        public System.Action onComplete = null;
+
+        public TweenSequence(List<TweenKeyFrame<T>> keyFrames, LerpFunction<T> lerpFunction, Action onComplete = null)
+        {
+            this.keyFrames = keyFrames;
+            this.lerpFunction = lerpFunction;
+            this.onComplete = onComplete;
         }
     }
 

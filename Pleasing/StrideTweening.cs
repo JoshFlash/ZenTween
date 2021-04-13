@@ -22,13 +22,23 @@ namespace Pleasing
 			Tween(transform, POSITION, keyFrame, lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
 		}
 		
-		public static void TweenLoopMove(this TransformComponent transform, Vector3 origin, Vector3 destination, float duration,
+		public static void TweenLoopMove(this TransformComponent transform, Vector3 destination, float duration,
 			EasingType easingTypeIn = EasingType.SinusoidalInOut, EasingType easingTypeOut = EasingType.SinusoidalInOut, float delay = 0, System.Action onComplete = null,
 			LerpFunction<Vector3> lerpFunction = null)
 		{
 			var keyFrameIn = new TweenKeyFrame<Vector3>((duration / 2) * FromSeconds, destination, GetEasingFunction(easingTypeIn));
-			var keyFrameOut = new TweenKeyFrame<Vector3>(duration * FromSeconds, origin, GetEasingFunction(easingTypeOut));
+			var keyFrameOut = new TweenKeyFrame<Vector3>(duration * FromSeconds, transform.Position, GetEasingFunction(easingTypeOut));
 			TweenLoop(transform, POSITION, keyFrameIn, keyFrameOut, lerpFunction ?? LerpFunctions.Vector3, delay * FromSeconds, onComplete);
+		}
+
+		public static void TweenLoopMoveSequence(this TransformComponent transform, TweenSequence<Vector3> tweenSequence, TweenSequence<Vector3> introSequence = null)
+		{
+			TweenLoopSequence(transform, POSITION, tweenSequence, introSequence);
+		}
+
+		public static void TweenMoveSequence(this TransformComponent transform, TweenSequence<Vector3> tweenSequence)
+		{
+			TweenOneShotSequence(transform, POSITION, tweenSequence);
 		}
 
 		public static void TweenRotate(this TransformComponent transform, Quaternion rotation, float duration,
