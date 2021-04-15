@@ -40,77 +40,77 @@ namespace Pleasing
 
     public static class Easing
     {
-        public static float Ease(EasingType easingFunction, float k)
-        {
-            switch (easingFunction)
-            {
-                case EasingType.Linear:
-                    return Linear(k);
-                case EasingType.QuadraticIn:
-                    return Quadratic.In(k);
-                case EasingType.QuadraticOut:
-                    return Quadratic.Out(k);
-                case EasingType.QuadraticInOut:
-                    return Quadratic.InOut(k);
-                case EasingType.CubicIn:
-                    return Cubic.In(k);
-                case EasingType.CubicOut:
-                    return Cubic.Out(k);
-                case EasingType.CubicInOut:
-                    return Cubic.InOut(k);
-                case EasingType.QuarticIn:
-                    return Quartic.In(k);
-                case EasingType.QuarticOut:
-                    return Quartic.Out(k);
-                case EasingType.QuarticInOut:
-                    return Quartic.InOut(k);
-                case EasingType.QuinticIn:
-                    return Quintic.In(k);
-                case EasingType.QuinticOut:
-                    return Quintic.Out(k);
-                case EasingType.QuinticInOut:
-                    return Quintic.InOut(k);
-                case EasingType.SinusoidalIn:
-                    return Sinusoidal.In(k);
-                case EasingType.SinusoidalOut:
-                    return Sinusoidal.Out(k);
-                case EasingType.SinusoidalInOut:
-                    return Sinusoidal.InOut(k);
-                case EasingType.ExponentialIn:
-                    return Exponential.In(k);
-                case EasingType.ExponentialOut:
-                    return Exponential.Out(k);
-                case EasingType.ExponentialInOut:
-                    return Exponential.InOut(k);
-                case EasingType.CircularIn:
-                    return Circular.In(k);
-                case EasingType.CircularOut:
-                    return Circular.Out(k);
-                case EasingType.CircularInOut:
-                    return Circular.InOut(k);
-                case EasingType.ElasticIn:
-                    return Elastic.In(k);
-                case EasingType.ElasticOut:
-                    return Elastic.Out(k);
-                case EasingType.ElasticInOut:
-                    return Elastic.InOut(k);
-                case EasingType.BackIn:
-                    return Back.In(k);
-                case EasingType.BackOut:
-                    return Back.Out(k);
-                case EasingType.BackInOut:
-                    return Back.InOut(k);
-                case EasingType.BounceIn:
-                    return Bounce.In(k);
-                case EasingType.BounceOut:
-                    return Bounce.Out(k);
-                case EasingType.BounceInOut:
-                    return Bounce.InOut(k);
-                default:
-                    return Linear(k);
-            }
-
-        }
+        internal static EasingFunction GetEasingFunction(EasingType easingType)
+		{
+			switch (easingType)
+			{
+				case EasingType.Linear:
+					return Linear;
+				case EasingType.QuadraticIn:
+					return Quadratic.In;
+				case EasingType.QuadraticOut:
+					return Quadratic.Out;
+				case EasingType.QuadraticInOut:
+					return Quadratic.InOut;
+				case EasingType.CubicIn:
+					return Cubic.In;
+				case EasingType.CubicOut:
+					return Cubic.Out;
+				case EasingType.CubicInOut:
+					return Cubic.InOut;
+				case EasingType.QuarticIn:
+					return Quartic.In;
+				case EasingType.QuarticOut:
+					return Quartic.Out;
+				case EasingType.QuarticInOut:
+					return Quartic.InOut;
+				case EasingType.QuinticIn:
+					return Quintic.In;
+				case EasingType.QuinticOut:
+					return Quintic.Out;
+				case EasingType.QuinticInOut:
+					return Quintic.InOut;
+				case EasingType.SinusoidalIn:
+					return Sinusoidal.In;
+				case EasingType.SinusoidalOut:
+					return Sinusoidal.Out;
+				case EasingType.SinusoidalInOut:
+					return Sinusoidal.InOut;
+				case EasingType.ExponentialIn:
+					return Exponential.In;
+				case EasingType.ExponentialOut:
+					return Exponential.Out;
+				case EasingType.ExponentialInOut:
+					return Exponential.InOut;
+				case EasingType.CircularIn:
+					return Circular.In;
+				case EasingType.CircularOut:
+					return Circular.Out;
+				case EasingType.CircularInOut:
+					return Circular.InOut;
+				case EasingType.ElasticIn:
+					return Elastic.In;
+				case EasingType.ElasticOut:
+					return Elastic.Out;
+				case EasingType.ElasticInOut:
+					return Elastic.InOut;
+				case EasingType.BackIn:
+					return Back.In;
+				case EasingType.BackOut:
+					return Back.Out;
+				case EasingType.BackInOut:
+					return Back.InOut;
+				case EasingType.BounceIn:
+					return Bounce.In;
+				case EasingType.BounceOut:
+					return Bounce.Out;
+				case EasingType.BounceInOut:
+					return Bounce.InOut;
+				case EasingType.Bezier:
+				default:
+					throw new ArgumentException($"No Easing Functioned defined for Type: {easingType}");
+			}
+		}
 
         public static float Linear(float k)
         {
