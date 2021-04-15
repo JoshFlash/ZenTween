@@ -1,9 +1,10 @@
-﻿
-#if MONOGAME
-using Microsoft.Xna.Framework;
-#elif STRIDE
+﻿#if STRIDE
 using Stride.Games;
 using Stride.Core.Mathematics;
+using InterpolatorModule = Stride.Core.Mathematics; 
+#elif MONOGAME || XNA || XBOX
+using Microsoft.Xna.Framework;
+using InterpolatorModule = Microsoft.Xna.Framework; 
 #endif
 
 using System;
@@ -28,18 +29,10 @@ namespace Pleasing
         private static List<TweenTimeline> timelines;
         private static Queue<TweenTimeline> timelinesQueue;
 
-        //For one-off tweens
-        private static List<TweenTimeline> singleTimelines;
-        private static Queue<TweenTimeline> singleTimelinesQueue;
-        private static List<TweenTimeline> removeTimelines;
-
         static Tweening()
         {
             timelines = new List<TweenTimeline>();
             timelinesQueue = new Queue<TweenTimeline>();
-            singleTimelines = new List<TweenTimeline>();
-            singleTimelinesQueue = new Queue<TweenTimeline>();
-            removeTimelines = new List<TweenTimeline>();
         }
 
         /// <summary>
@@ -59,7 +52,7 @@ namespace Pleasing
             property.AddFrame(new TweenKeyFrame<T>(delay, property.initialValue, Easing.Linear));
             property.AddFrame(keyFrame);
             
-            singleTimelinesQueue.Enqueue(timeline);
+            timelinesQueue.Enqueue(timeline);
         }
 
         /// <summary>
@@ -85,7 +78,7 @@ namespace Pleasing
             property.AddFrame(new TweenKeyFrame<T>(delay + keyFrameOut.frame, keyFrameOut.value, keyFrameOut.easingFunction));
             
             timeline.Loop = true;
-            singleTimelinesQueue.Enqueue(timeline);
+            timelinesQueue.Enqueue(timeline);
         }
         
         public static void TweenOneShotSequence<T>(object target, string propertyName, TweenSequence<T> sequence)
@@ -104,7 +97,7 @@ namespace Pleasing
                 property.AddFrame(keyFrame);
             }
 			
-            singleTimelinesQueue.Enqueue(timeline);
+            timelinesQueue.Enqueue(timeline);
         }
 		
         public static void TweenLoopSequence<T>(object target, string propertyName, TweenSequence<T> sequence, TweenSequence<T> introSequence = null)
@@ -126,7 +119,7 @@ namespace Pleasing
             }
 			
             timeline.Loop = true;
-            singleTimelinesQueue.Enqueue(timeline);
+            timelinesQueue.Enqueue(timeline);
         }
 
         public static TweenTimeline NewTimeline()
@@ -152,14 +145,10 @@ namespace Pleasing
         public static void Clear()
         {
             timelines.Clear();
-            singleTimelines.Clear();
-            removeTimelines.Clear();
-            
             timelinesQueue.Clear();
-            singleTimelinesQueue.Clear();
         }
 
-#if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME || STRIDE
+#if XNA || XBOX || MONOGAME || STRIDE
 
         public static void Update(GameTime gameTime)
         {
@@ -167,29 +156,15 @@ namespace Pleasing
             {
                 timelines.Add(timelinesQueue.Dequeue());
             }
-            while (singleTimelinesQueue.Count > 0)
-            {
-                singleTimelines.Add(singleTimelinesQueue.Dequeue());
-            }
             
             foreach (var timeline in timelines)
             {
                 timeline.Update(gameTime);
             }
-            
-            foreach (var timeline in singleTimelines)
-            {
-                timeline.Update(gameTime);
-                if (timeline.State == TweenState.Stopped)
-                    removeTimelines.Add(timeline);
-            }
-            
-            foreach(var timeline in removeTimelines)
-            {
-                singleTimelines.Remove(timeline);
-            }
-            removeTimelines.Clear();
+
+            timelines.RemoveAll(timeline => timeline.State == TweenState.Stopped);
         }
+        
 #endif
 
         public static void Update(float deltaTime)
@@ -477,26 +452,23 @@ namespace Pleasing
                 
                 return false;
             }
+            
+            if (lastFrame == null)
+            {
+                var progress = timelineElapsed / nextFrame.frame;
+                var easedProgress = nextFrame.easingFunction(progress);
+                var newValue = lerpFunction(initialValue, nextFrame.value, easedProgress);
+                SetValue(newValue);
+            }
             else
             {
-                if (lastFrame == null)
-                {
-                    var progress = timelineElapsed / nextFrame.frame;
-                    var easedProgress = nextFrame.easingFunction(progress);
-                    var newValue = lerpFunction(initialValue, nextFrame.value, easedProgress);
-                    SetValue(newValue);
-                }
-                else
-                {
-                    var progress = (timelineElapsed - lastFrame.frame) / (nextFrame.frame - lastFrame.frame);
-                    var easedProgress = nextFrame.easingFunction(progress);
-                    var newValue = lerpFunction(lastFrame.value, nextFrame.value, easedProgress);
-                    SetValue(newValue);
-                }
+                var progress = (timelineElapsed - lastFrame.frame) / (nextFrame.frame - lastFrame.frame);
+                var easedProgress = nextFrame.easingFunction(progress);
+                var newValue = lerpFunction(lastFrame.value, nextFrame.value, easedProgress);
+                SetValue(newValue);
             }
 
             return true;
-            
         }
 
         public abstract void SetValue(T value);
@@ -593,33 +565,19 @@ namespace Pleasing
     public static class LerpFunctions
     {
         public static LerpFunction<float> Float = (s, e, p) => s + (e - s) * p;
-#if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME
-        public static LerpFunction<Vector2> Vector2 = (s, e, p) => { return Microsoft.Xna.Framework.Vector2.Lerp(s, e, p); };
-        public static LerpFunction<Vector3> Vector3 = (s, e, p) => { return Microsoft.Xna.Framework.Vector3.Lerp(s, e, p); };
-        public static LerpFunction<Vector4> Vector4 = (s, e, p) => { return Microsoft.Xna.Framework.Vector4.Lerp(s, e, p); };
-        public static LerpFunction<Color> Color = (s, e, p) => { return Microsoft.Xna.Framework.Color.Lerp(s, e, p); };
-        public static LerpFunction<Quaternion> Quaternion = (s, e, p) => { return Microsoft.Xna.Framework.Quaternion.Lerp(s, e, p); };
-        public static LerpFunction<Rectangle> Rectangle = (s, e, p) =>
-            {
-                var pX = s.X + (e.X - s.X) * p;
-                var pY = s.Y + (e.Y - s.Y) * p;
-                var width = s.Width + (e.Width - s.Width) * p;
-                var height = s.Height + (e.Height - s.Height) * p;
-                return new Microsoft.Xna.Framework.Rectangle((int)pX, (int)pY, (int)width, (int)height);
-            };
-#elif STRIDE
-        public static readonly LerpFunction<Vector2>    Vector2     = Stride.Core.Mathematics.Vector2.Lerp;
-        public static readonly LerpFunction<Vector3>    Vector3     = Stride.Core.Mathematics.Vector3.Lerp;
-        public static readonly LerpFunction<Vector4>    Vector4     = Stride.Core.Mathematics.Vector4.Lerp;
-        public static readonly LerpFunction<Color>      Color       = Stride.Core.Mathematics.Color.Lerp;
-        public static readonly LerpFunction<Quaternion> Quaternion  = Stride.Core.Mathematics.Quaternion.Lerp;
+#if XNA || XBOX || MONOGAME || STRIDE
+        public static readonly LerpFunction<Vector2>    Vector2     = InterpolatorModule.Vector2.Lerp;
+        public static readonly LerpFunction<Vector3>    Vector3     = InterpolatorModule.Vector3.Lerp;
+        public static readonly LerpFunction<Vector4>    Vector4     = InterpolatorModule.Vector4.Lerp;
+        public static readonly LerpFunction<Color>      Color       = InterpolatorModule.Color.Lerp;
+        public static readonly LerpFunction<Quaternion> Quaternion  = InterpolatorModule.Quaternion.Lerp;
         public static readonly LerpFunction<Rectangle>  Rectangle   = (s, e, p) =>
         {
             var pX = s.X + (e.X - s.X) * p;
             var pY = s.Y + (e.Y - s.Y) * p;
             var width = s.Width + (e.Width - s.Width) * p;
             var height = s.Height + (e.Height - s.Height) * p;
-            return new Stride.Core.Mathematics.Rectangle((int)pX, (int)pY, (int)width, (int)height);
+            return new InterpolatorModule.Rectangle((int)pX, (int)pY, (int)width, (int)height);
         };  
 #endif
     }
