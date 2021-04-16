@@ -406,7 +406,7 @@ namespace ZenTween
         protected LerpFunction<T> lerpFunction { get; init; }
         protected bool Done;
 
-        public TweenableProperty(object target, Action onComplete,LerpFunction<T> lerpFunction)
+        protected TweenableProperty(object target, Action onComplete,LerpFunction<T> lerpFunction)
         {
             this.target = target;
             this.onComplete = onComplete;
@@ -430,6 +430,12 @@ namespace ZenTween
 
         public bool Update(float timelineElapsed)
         {
+            if (keyFrames.Count == 0)
+            {
+                Done = true;
+                return false;
+            }
+
             TweenKeyFrame<T> lastFrame = null;
             TweenKeyFrame<T> nextFrame = null;
             foreach(var frame in keyFrames)
@@ -447,7 +453,6 @@ namespace ZenTween
 
             if(nextFrame == null)
             {
-                //TODO throw warning and destroy timeline before ever getting here with latFrame == null
                 if (!Done)
                 {
                     SetValue(lastFrame.value);
