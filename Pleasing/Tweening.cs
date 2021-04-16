@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Pleasing
+namespace ZenTween
 {
     public enum TweenState
     {
@@ -455,7 +455,6 @@ namespace Pleasing
                 }
 
                 Done = true;
-                
                 return false;
             }
             

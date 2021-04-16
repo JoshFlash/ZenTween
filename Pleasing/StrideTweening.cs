@@ -5,7 +5,7 @@ using Stride.Engine;
 
 #endif
 
-namespace Pleasing
+namespace ZenTween
 {
 	public static partial class Tweening
 	{
