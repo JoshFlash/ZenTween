@@ -1,8 +1,6 @@
-using System;
 #if STRIDE
 using Stride.Core.Mathematics;
 using Stride.Engine;
-
 #endif
 
 namespace ZenTween
