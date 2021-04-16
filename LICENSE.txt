@@ -1,7 +1,6 @@
 MIT License
 
-Copyright (c) 2017 Frank Anthony Norton
-Copyright (c) 2021 Joshua Michael Flash
+Copyright (c) 2021 Joshua Michael Flash, Frank Anthony Norton
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
