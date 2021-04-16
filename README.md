@@ -1,5 +1,3 @@
-![ZenTween-logo-black](https://user-images.githubusercontent.com/2876140/115016529-41a84180-9f09-11eb-9c77-0c14164c0de1.png)
-
 
 
 **ZenTween** is an easy-to-use C# *tweening* library designed to be used in the Stride Game engine. It aims to be as simple as possible while also being flexible enough for any scenario. ZenTween includes a tweening timeline which makes it simple to plan multiple tweens on multiple objects.
