@@ -266,9 +266,10 @@ namespace Pleasing
             return null;
         }
 
-        public TweenableProperty<T> AddProperty<T>(T initialValue, Action<T> setter, LerpFunction<T> lerpFunction)
+        public TweenableProperty<T> AddProperty<T>(T initialValue, Action<T> setter, LerpFunction<T> lerpFunction, Action onComplete)
+            where T : unmanaged
         {
-            var t = new TweenSetter<T>(initialValue, setter, lerpFunction);
+            var t = new TweenSetter<T>(initialValue, setter, lerpFunction, onComplete);
             return t;
         }
 
@@ -397,14 +398,18 @@ namespace Pleasing
     }
     public abstract class TweenableProperty<T> : ITweenableProperty
     {
-        public T initialValue { get; protected init; }
+        internal T initialValue { get; init; }
+
+        protected object target { get; init; }
         protected Action onComplete { get; init; }
-        protected List<TweenKeyFrame<T>> keyFrames;
-        protected LerpFunction<T> lerpFunction;
+        protected List<TweenKeyFrame<T>> keyFrames { get; init; }
+        protected LerpFunction<T> lerpFunction { get; init; }
         protected bool Done;
 
-        public TweenableProperty(LerpFunction<T> lerpFunction)
+        public TweenableProperty(object target, Action onComplete,LerpFunction<T> lerpFunction)
         {
+            this.target = target;
+            this.onComplete = onComplete;
             keyFrames = new List<TweenKeyFrame<T>>();
             this.lerpFunction = lerpFunction;
         }
@@ -412,14 +417,14 @@ namespace Pleasing
         public TweenableProperty<T> AddFrame(TweenKeyFrame<T> keyFrame)
         {
             keyFrames.Add(keyFrame);
-            keyFrames = keyFrames.OrderBy(x => x.frame).ToList();
+            keyFrames.Sort((x,y) => x.frame.CompareTo(y.frame));
             return this;
         }
 
         public TweenableProperty<T> RemoveFrame(TweenKeyFrame<T> keyFrame)
         {
             keyFrames.Remove(keyFrame);
-            keyFrames = keyFrames.OrderBy(x => x.frame).ToList();
+            keyFrames.Sort((x,y) => x.frame.CompareTo(y.frame));
             return this;
         }
 
@@ -442,6 +447,7 @@ namespace Pleasing
 
             if(nextFrame == null)
             {
+                //TODO throw warning and destroy timeline before ever getting here with latFrame == null
                 if (!Done)
                 {
                     SetValue(lastFrame.value);
@@ -480,15 +486,12 @@ namespace Pleasing
     }
     internal class TweenProperty<T> : TweenableProperty<T>
     {
-        public object target;
-        public PropertyInfo property;
+        private PropertyInfo property { get; init; }
 
         public TweenProperty(object target, PropertyInfo property, LerpFunction<T> lerpFunction, Action onComplete)
-            :base(lerpFunction)
+            :base(target, onComplete, lerpFunction)
         {
-            this.target = target;
             this.property = property;
-            this.onComplete = onComplete;
             initialValue = (T)property.GetValue(target);
         }
         
@@ -499,15 +502,12 @@ namespace Pleasing
     }
     internal class TweenField<T> : TweenableProperty<T>
     {
-        public object target;
-        public FieldInfo field;
+        private FieldInfo field { get; init; }
 
         public TweenField(object target, FieldInfo field, LerpFunction<T> lerpFunction, Action onComplete)
-            :base(lerpFunction)
+            :base(target, onComplete, lerpFunction)
         {
-            this.target = target;
             this.field = field;
-            this.onComplete = onComplete;
             initialValue = (T)field.GetValue(target);
         }
         
@@ -517,12 +517,14 @@ namespace Pleasing
         }
     }
     internal class TweenSetter<T> : TweenableProperty<T>
+        where T : unmanaged
     {
-        public Action<T> setter;
+        private Action<T> setter { get; init; }
 
-        public TweenSetter(T initialValue, Action<T> setter, LerpFunction<T> lerpFunction)
-            : base(lerpFunction)
+        public TweenSetter(T initialValue, Action<T> setter, LerpFunction<T> lerpFunction, Action onComplete)
+            : base(initialValue, onComplete, lerpFunction)
         {
+            this.initialValue = initialValue;
             this.setter = setter;
         }
         
@@ -534,9 +536,9 @@ namespace Pleasing
 
     public class TweenKeyFrame<T>
     {
-        public float frame;
-        public T value;
-        public EasingFunction easingFunction;
+        public float frame { get; set; }
+        public T value { get; set; }
+        public EasingFunction easingFunction { get; set; }
 
         public TweenKeyFrame(float frame, T value, EasingFunction easingFunction)
         {
