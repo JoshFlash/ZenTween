@@ -1,13 +1,10 @@
-#if STRIDE
 using Stride.Core.Mathematics;
 using Stride.Engine;
-#endif
 
 namespace ZenTween
 {
 	public static partial class Tweening
 	{
-#if STRIDE
 		private const string POSITION = "Position";
 		private const string ROTATION = "Rotation";
 		private const string SCALE = "Scale";
@@ -90,6 +87,5 @@ namespace ZenTween
 		{
 			TweenOneShotSequence(transform, SCALE, tweenSequence);
 		}
-#endif
 	}
 }
