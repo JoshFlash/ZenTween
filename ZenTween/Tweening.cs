@@ -83,16 +83,16 @@ namespace ZenTween
         
         public static void TweenOneShotSequence<T>(object target, string propertyName, TweenSequence<T> sequence)
         {
-            if (sequence.keyFrames.Count == 0)
+            if (sequence.KeyFrames.Count == 0)
             {
-                sequence.onComplete?.Invoke();
+                sequence.OnComplete?.Invoke();
                 return;
             }
 
             var timeline = new TweenTimeline();
 
-            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, sequence.lerpFunction, sequence.onComplete);
-            foreach (var keyFrame in sequence.keyFrames)
+            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, sequence.LerpFunction, sequence.OnComplete);
+            foreach (var keyFrame in sequence.KeyFrames)
             {
                 property.AddFrame(keyFrame);
             }
@@ -105,41 +105,21 @@ namespace ZenTween
 
             if (introSequence != null)
             {
-                introSequence.onComplete += () => TweenLoopSequence<T>(target, propertyName, sequence, null);
+                introSequence.OnComplete += () => TweenLoopSequence<T>(target, propertyName, sequence, null);
                 TweenOneShotSequence(target, propertyName, introSequence);
                 return;
             }
 
             var timeline = new TweenTimeline();
 
-            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, sequence.lerpFunction, sequence.onComplete);
-            foreach (var keyFrame in sequence.keyFrames)
+            TweenableProperty<T> property = timeline.AddProperty<T>(target, propertyName, sequence.LerpFunction, sequence.OnComplete);
+            foreach (var keyFrame in sequence.KeyFrames)
             {
                 property.AddFrame(keyFrame);
             }
 			
             timeline.Loop = true;
             timelinesQueue.Enqueue(timeline);
-        }
-
-        public static TweenTimeline NewTimeline()
-        {
-            var timeline = new TweenTimeline(0);
-            timeline.AdaptiveDuration = true;
-            timelinesQueue.Enqueue(timeline);
-            return timeline;
-        }
-        /// <summary>
-        /// Creates a new timeline.
-        /// </summary>
-        /// <param name="duration">The length of the timeline in milliseconds.
-        /// Leave blank to have tweens set it.</param>
-        /// <returns></returns>
-        public static TweenTimeline NewTimeline(float duration)
-        {
-            var timeline = new TweenTimeline(duration);
-            timelinesQueue.Enqueue(timeline);
-            return timeline;
         }
 
         public static void Clear()
@@ -185,21 +165,14 @@ namespace ZenTween
     /// </summary>
     public class TweenTimeline
     {
-        public List<ITweenableProperty> tweeningProperties;
-        public float elapsedMilliseconds;
+        public List<ITweenableProperty> TweeningProperties;
+        public float ElapsedMilliseconds;
         public bool Loop;
-        public float duration;
         public TweenState State;
-        public bool AdaptiveDuration;
 
-        public TweenTimeline() : this(0)
+        public TweenTimeline()
         {
-            AdaptiveDuration = true;
-        }
-        public TweenTimeline(float duration)
-        {
-            this.duration = duration;
-            tweeningProperties = new List<ITweenableProperty>();
+            TweeningProperties = new List<ITweenableProperty>();
             State = TweenState.Running;
         }
 
@@ -207,32 +180,21 @@ namespace ZenTween
         {
             State = TweenState.Running;
         }
+
         public void Stop()
         {
-            elapsedMilliseconds = 0;
             State = TweenState.Stopped;
-            ResetProperties();
         }
+
         public void Pause()
         {
             State = TweenState.Paused;
         }
+
         public void Restart()
         {
-            elapsedMilliseconds = 0;
+            ElapsedMilliseconds = 0;
             State = TweenState.Running;
-            ResetProperties();
-        }
-
-        /// <summary>
-        /// Scans through the timeline backwards, resetting properties to their orginal state.
-        /// </summary>
-        protected void ResetProperties()
-        {
-            for (int i = tweeningProperties.Count - 1; i >= 0; i--)
-            {
-                tweeningProperties[i].Reset();
-            }
         }
 
         public TweenableProperty<T> AddProperty<T>(object target, string propertyName, LerpFunction<T> lerpFunction, Action onComplete)
@@ -246,7 +208,7 @@ namespace ZenTween
                 if (property.PropertyType == typeof(T))
                 {
                     var t = new TweenProperty<T>(target, property, lerpFunction, onComplete);
-                    tweeningProperties.Add(t);
+                    TweeningProperties.Add(t);
                     return t;
                 }
             }
@@ -258,7 +220,7 @@ namespace ZenTween
                     if (field.FieldType == typeof(T))
                     {
                         var t = new TweenField<T>(target, field, lerpFunction, onComplete);
-                        tweeningProperties.Add(t);
+                        TweeningProperties.Add(t);
                         return t;
                     }
                 }
@@ -273,118 +235,67 @@ namespace ZenTween
             return t;
         }
 
-        
-#if XNA || WINDOWS_PHONE || XBOX || ANDROID || MONOGAME || STRIDE
+#if XNA || XBOX || MONOGAME || STRIDE
 
         public void Update(GameTime gameTime)
         {
-            if(AdaptiveDuration)
-            {
 #if STRIDE
-                elapsedMilliseconds += (float)gameTime.Elapsed.Milliseconds;
+            ElapsedMilliseconds += (float) gameTime.Elapsed.Milliseconds;
 #else
-                elapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-#endif
-                
-                if(State == TweenState.Running)
-                {
-                    var propertiesFinished = 0;
-                    foreach (var property in tweeningProperties)
-                    {
-                        if(!property.Update(elapsedMilliseconds)) //No Frames Left
-                        {
-                            propertiesFinished++;
-                        }
-                    }
-                    if (propertiesFinished == tweeningProperties.Count)
-                    {
-                        elapsedMilliseconds = 0;
-                        if (!Loop)
-                        {
-                            State = TweenState.Stopped;
-                        }
-                    }
-                }
-            }
-            else if (State == TweenState.Running)
-            {
-#if STRIDE
-                elapsedMilliseconds += (float)gameTime.Elapsed.Milliseconds;
-#else
-                elapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+            ElapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
 #endif
 
-                if (elapsedMilliseconds >= duration)
+            if (State == TweenState.Running)
+            {
+                var propertiesFinished = 0;
+                foreach (var property in TweeningProperties)
                 {
+                    if (!property.Update(ElapsedMilliseconds)) //No Frames Left
+                    {
+                        propertiesFinished++;
+                    }
+                }
+
+                if (propertiesFinished == TweeningProperties.Count)
+                {
+                    ElapsedMilliseconds = 0;
                     if (Loop)
                     {
-                        elapsedMilliseconds = elapsedMilliseconds - duration;
-                        ResetProperties();
+                        Restart();
                     }
                     else
                     {
                         Stop();
                     }
-                }
-
-                if (State == TweenState.Running)
-                {
-                    foreach (var property in tweeningProperties)
-                    {
-                        property.Update(elapsedMilliseconds);                        
-                    }                    
                 }
             }
         }
 #endif
-        
+
         public void Update(float deltaTime)
         {
-            if (AdaptiveDuration)
+            ElapsedMilliseconds += deltaTime;
+            if (State == TweenState.Running)
             {
-                elapsedMilliseconds += deltaTime;
-                if (State == TweenState.Running)
+                var propertiesFinished = 0;
+                foreach (var property in TweeningProperties)
                 {
-                    var propertiesFinished = 0;
-                    foreach (var property in tweeningProperties)
+                    if (!property.Update(ElapsedMilliseconds)) //No Frames Left
                     {
-                        if (!property.Update(elapsedMilliseconds)) //No Frames Left
-                        {
-                            propertiesFinished++;
-                        }
-                    }
-                    if (propertiesFinished == tweeningProperties.Count)
-                    {
-                        elapsedMilliseconds = 0;
-                        if (!Loop)
-                        {
-                            State = TweenState.Stopped;
-                        }
+                        propertiesFinished++;
                     }
                 }
-            }
-            else if (State == TweenState.Running)
-            {
-                elapsedMilliseconds += deltaTime;
 
-                if (elapsedMilliseconds >= duration)
+                if (propertiesFinished == TweeningProperties.Count)
                 {
+                    ElapsedMilliseconds = 0;
                     if (Loop)
                     {
-                        elapsedMilliseconds = elapsedMilliseconds - duration;
-                        ResetProperties();
+                        Restart();
                     }
                     else
                     {
                         Stop();
-                    }
-                }
-
-                if (State == TweenState.Running)
-                {
-                    foreach (var property in tweeningProperties)
-                    {
-                        property.Update(elapsedMilliseconds);
                     }
                 }
             }
@@ -394,8 +305,8 @@ namespace ZenTween
     public interface ITweenableProperty
     {
         bool Update(float timelineElapsed);
-        void Reset();
     }
+    
     public abstract class TweenableProperty<T> : ITweenableProperty
     {
         internal T initialValue { get; init; }
@@ -482,12 +393,8 @@ namespace ZenTween
         }
 
         public abstract void SetValue(T value);
-
-        public void Reset()
-        {
-            
-        }
     }
+    
     internal class TweenProperty<T> : TweenableProperty<T>
     {
         private PropertyInfo property { get; init; }
@@ -504,6 +411,7 @@ namespace ZenTween
             property.SetValue(target, value);
         }
     }
+    
     internal class TweenField<T> : TweenableProperty<T>
     {
         private FieldInfo field { get; init; }
@@ -520,6 +428,7 @@ namespace ZenTween
             field.SetValue(target, value);
         }
     }
+    
     internal class TweenSetter<T> : TweenableProperty<T>
         where T : unmanaged
     {
@@ -554,15 +463,15 @@ namespace ZenTween
 
     public class TweenSequence<T>
     {
-        public List<TweenKeyFrame<T>> keyFrames = default;
-        public LerpFunction<T> lerpFunction = default;
-        public System.Action onComplete = null;
+        public List<TweenKeyFrame<T>> KeyFrames = default;
+        public LerpFunction<T> LerpFunction = default;
+        public System.Action OnComplete = null;
 
         public TweenSequence(List<TweenKeyFrame<T>> keyFrames, LerpFunction<T> lerpFunction, Action onComplete = null)
         {
-            this.keyFrames = keyFrames;
-            this.lerpFunction = lerpFunction;
-            this.onComplete = onComplete;
+            KeyFrames = keyFrames;
+            LerpFunction = lerpFunction;
+            OnComplete = onComplete;
         }
     }
 
