@@ -144,6 +144,7 @@ namespace ZenTween
     public class TweenTimeline
     {
         public List<ITweenableProperty> TweeningProperties;
+        public Queue<ITweenableProperty> ExpiredProperties;
         public float ElapsedMilliseconds;
         public bool Loop;
         public TweenState State;
@@ -151,6 +152,7 @@ namespace ZenTween
         public TweenTimeline()
         {
             TweeningProperties = new List<ITweenableProperty>();
+            ExpiredProperties = new Queue<ITweenableProperty>();
             State = TweenState.Running;
         }
 
@@ -173,6 +175,10 @@ namespace ZenTween
         {
             ElapsedMilliseconds = 0;
             State = TweenState.Running;
+            while (ExpiredProperties.Count > 0)
+            {
+                TweeningProperties.Add(ExpiredProperties.Dequeue());
+            }
         }
 
         public TweenableProperty<T> AddProperty<T>(object target, string propertyName, LerpFunction<T> lerpFunction, Action onComplete)
@@ -215,22 +221,22 @@ namespace ZenTween
 
         public void Update(GameTime gameTime)
         {
-            ElapsedMilliseconds += gameTime.Elapsed.Milliseconds;
-
             if (State == TweenState.Running)
             {
-                var propertiesFinished = 0;
-                foreach (var property in TweeningProperties)
+                ElapsedMilliseconds += gameTime.Elapsed.Milliseconds;
+
+                for (int i = TweeningProperties.Count - 1; i >= 0; i--)
                 {
-                    if (!property.Update(ElapsedMilliseconds)) //No Frames Left
+                    var property = TweeningProperties[i];
+                    if (!property.Update(ElapsedMilliseconds))
                     {
-                        propertiesFinished++;
+                        TweeningProperties.Remove(property);
+                        ExpiredProperties.Enqueue(property);
                     }
                 }
 
-                if (propertiesFinished == TweeningProperties.Count)
+                if (TweeningProperties.Count == 0)
                 {
-                    ElapsedMilliseconds = 0;
                     if (Loop)
                     {
                         Restart();
@@ -257,9 +263,8 @@ namespace ZenTween
         protected Action onComplete { get; init; }
         protected List<TweenKeyFrame<T>> keyFrames { get; init; }
         protected LerpFunction<T> lerpFunction { get; init; }
-        protected bool Done;
 
-        protected TweenableProperty(object target, Action onComplete,LerpFunction<T> lerpFunction)
+        protected TweenableProperty(object target, Action onComplete, LerpFunction<T> lerpFunction)
         {
             this.target = target;
             this.onComplete = onComplete;
@@ -285,15 +290,14 @@ namespace ZenTween
         {
             if (keyFrames.Count == 0)
             {
-                Done = true;
                 return false;
             }
 
             TweenKeyFrame<T> lastFrame = null;
             TweenKeyFrame<T> nextFrame = null;
-            foreach(var frame in keyFrames)
+            foreach (var frame in keyFrames)
             {
-                if(frame.frame <= timelineElapsed)
+                if (frame.frame <= timelineElapsed)
                 {
                     lastFrame = frame;
                 }
@@ -304,33 +308,20 @@ namespace ZenTween
                 }
             }
 
-            if(nextFrame == null)
+            if (nextFrame == null)
             {
-                if (!Done)
-                {
-                    SetValue(lastFrame.value);
-                    onComplete?.Invoke();
-                }
-
-                Done = true;
+                onComplete?.Invoke();
                 return false;
             }
-            
-            if (lastFrame == null)
-            {
-                var progress = timelineElapsed / nextFrame.frame;
-                var easedProgress = nextFrame.easingFunction(progress);
-                var newValue = lerpFunction(initialValue, nextFrame.value, easedProgress);
-                SetValue(newValue);
-            }
-            else
-            {
-                var progress = (timelineElapsed - lastFrame.frame) / (nextFrame.frame - lastFrame.frame);
-                var easedProgress = nextFrame.easingFunction(progress);
-                var newValue = lerpFunction(lastFrame.value, nextFrame.value, easedProgress);
-                SetValue(newValue);
-            }
 
+            float lastKeyFrame = lastFrame?.frame ?? 0;
+            float progress = (timelineElapsed - lastKeyFrame) / (nextFrame.frame - lastKeyFrame);
+            float easedProgress = nextFrame.easingFunction(progress);
+            
+            T lastValue = lastFrame != null ? lastFrame.value : initialValue;
+            T newValue = lerpFunction(lastValue, nextFrame.value, easedProgress);
+            
+            SetValue(newValue);
             return true;
         }
 

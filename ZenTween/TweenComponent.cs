@@ -10,15 +10,20 @@ namespace ZenTween
 {
 	public class TweenComponent : StartupScript
 	{
+		public bool Enabled { get; set; } = true;
+
 		[DataMember] public ComputeCurveSampler<Vector3> TweenCurve { get; set; } = new ComputeCurveSamplerVector3();
 		public EasingType EasingType { get; set; } = EasingType.Linear;
 		public bool LoopTween = false;
-		
+
 		private ComputeAnimationCurve<Vector3> computeAnimationCurve { get; set; } = new ComputeAnimationCurveVector3();
 		private List<TweenKeyFrame<Vector3>> tweenKeyFrames = new();
 		
 		public override void Start()
 		{
+			if (!Enabled)
+				return;
+			
 			computeAnimationCurve = TweenCurve.Curve as ComputeAnimationCurve<Vector3>;
 			if (computeAnimationCurve != null)
 			{
