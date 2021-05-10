@@ -1,12 +1,5 @@
-﻿#if STRIDE
-using Stride.Games;
+﻿using Stride.Games;
 using Stride.Core.Mathematics;
-using InterpolatorModule = Stride.Core.Mathematics; 
-#elif MONOGAME || XNA || XBOX
-using Microsoft.Xna.Framework;
-using InterpolatorModule = Microsoft.Xna.Framework; 
-#endif
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -128,8 +121,6 @@ namespace ZenTween
             timelinesQueue.Clear();
         }
 
-#if XNA || XBOX || MONOGAME || STRIDE
-
         public static void Update(GameTime gameTime)
         {
             while (timelinesQueue.Count > 0)
@@ -145,19 +136,6 @@ namespace ZenTween
             timelines.RemoveAll(timeline => timeline.State == TweenState.Stopped);
         }
         
-#endif
-
-        public static void Update(float deltaTime)
-        {
-            while (timelinesQueue.Count > 0)
-            {
-                timelines.Add(timelinesQueue.Dequeue());
-            }
-            foreach(var timeline in timelines)
-            {
-                timeline.Update(deltaTime);
-            }
-        }
     }
 
     /// <summary>
@@ -235,46 +213,10 @@ namespace ZenTween
             return t;
         }
 
-#if XNA || XBOX || MONOGAME || STRIDE
-
         public void Update(GameTime gameTime)
         {
-#if STRIDE
-            ElapsedMilliseconds += (float) gameTime.Elapsed.Milliseconds;
-#else
-            ElapsedMilliseconds += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-#endif
+            ElapsedMilliseconds += gameTime.Elapsed.Milliseconds;
 
-            if (State == TweenState.Running)
-            {
-                var propertiesFinished = 0;
-                foreach (var property in TweeningProperties)
-                {
-                    if (!property.Update(ElapsedMilliseconds)) //No Frames Left
-                    {
-                        propertiesFinished++;
-                    }
-                }
-
-                if (propertiesFinished == TweeningProperties.Count)
-                {
-                    ElapsedMilliseconds = 0;
-                    if (Loop)
-                    {
-                        Restart();
-                    }
-                    else
-                    {
-                        Stop();
-                    }
-                }
-            }
-        }
-#endif
-
-        public void Update(float deltaTime)
-        {
-            ElapsedMilliseconds += deltaTime;
             if (State == TweenState.Running)
             {
                 var propertiesFinished = 0;
@@ -480,22 +422,19 @@ namespace ZenTween
     public static class LerpFunctions
     {
         public static LerpFunction<float> Float = (s, e, p) => s + (e - s) * p;
-#if XNA || XBOX || MONOGAME || STRIDE
-        public static readonly LerpFunction<Vector2>    Vector2     = InterpolatorModule.Vector2.Lerp;
-        public static readonly LerpFunction<Vector3>    Vector3     = InterpolatorModule.Vector3.Lerp;
-        public static readonly LerpFunction<Vector4>    Vector4     = InterpolatorModule.Vector4.Lerp;
-        public static readonly LerpFunction<Color>      Color       = InterpolatorModule.Color.Lerp;
-        public static readonly LerpFunction<Quaternion> Quaternion  = InterpolatorModule.Quaternion.Lerp;
+        public static readonly LerpFunction<Vector2>    Vector2     = Stride.Core.Mathematics.Vector2.Lerp;
+        public static readonly LerpFunction<Vector3>    Vector3     = Stride.Core.Mathematics.Vector3.Lerp;
+        public static readonly LerpFunction<Vector4>    Vector4     = Stride.Core.Mathematics.Vector4.Lerp;
+        public static readonly LerpFunction<Color>      Color       = Stride.Core.Mathematics.Color.Lerp;
+        public static readonly LerpFunction<Quaternion> Quaternion  = Stride.Core.Mathematics.Quaternion.Lerp;
         public static readonly LerpFunction<Rectangle>  Rectangle   = (s, e, p) =>
         {
             var pX = s.X + (e.X - s.X) * p;
             var pY = s.Y + (e.Y - s.Y) * p;
             var width = s.Width + (e.Width - s.Width) * p;
             var height = s.Height + (e.Height - s.Height) * p;
-            return new InterpolatorModule.Rectangle((int)pX, (int)pY, (int)width, (int)height);
+            return new Stride.Core.Mathematics.Rectangle((int)pX, (int)pY, (int)width, (int)height);
         };  
-#endif
     }
-
 
 }
