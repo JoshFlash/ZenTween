@@ -310,6 +310,7 @@ namespace ZenTween
 
             if (nextFrame == null)
             {
+                SetValue(lastFrame.value);
                 onComplete?.Invoke();
                 return false;
             }
