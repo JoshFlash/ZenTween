@@ -1,5 +1,6 @@
 using Stride.Core.Mathematics;
 using Stride.Engine;
+using Stride.Physics;
 
 namespace ZenTween
 {
@@ -7,6 +8,7 @@ namespace ZenTween
 	{
 		private const string POSITION = "Position";
 		private const string ROTATION = "Rotation";
+		private const string ORIENTATION = "Orientation";
 		private const string SCALE = "Scale";
 		private const float FromSeconds = 1000f;
 
@@ -60,6 +62,13 @@ namespace ZenTween
 		public static void TweenRotateSequence(this TransformComponent transform, TweenSequence<Quaternion> tweenSequence)
 		{
 			TweenOneShotSequence(transform, ROTATION, tweenSequence);
+		}
+		
+		public static void TweenRotate(this CharacterComponent character, Quaternion rotation, float duration,
+			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
+		{
+			var keyFrame = new TweenKeyFrame<Quaternion>(duration * FromSeconds, rotation, Easing.GetEasingFunction(easingType));
+			Tween(character, ORIENTATION, keyFrame, lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
 		}
 		
 		public static void TweenScale(this TransformComponent transform, Vector3 scale, float duration,
