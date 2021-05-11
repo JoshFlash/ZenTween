@@ -65,9 +65,9 @@ namespace ZenTween
 		}
 		
 		public static void TweenRotate(this CharacterComponent character, Quaternion rotation, float duration,
-			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
+			EasingType easingType = EasingType.CubicOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
 		{
-			var keyFrame = new TweenKeyFrame<Quaternion>(duration * FromSeconds, rotation, Easing.GetEasingFunction(easingType));
+			var keyFrame = new TweenKeyFrame<Quaternion>(duration * FromSeconds, character.Orientation * rotation, Easing.GetEasingFunction(easingType));
 			Tween(character, ORIENTATION, keyFrame, lerpFunction ?? LerpFunctions.Quaternion, delay * FromSeconds, onComplete);
 		}
 		
