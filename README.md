@@ -36,4 +36,4 @@ Authors:
 
 ## License
 
-Pleasing is under the MIT license (2021). A copy of the license is found in the root of the repository.
+ZenTween is under the MIT license (2021). A copy of the license is found in the root of the repository.
