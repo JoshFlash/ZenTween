@@ -38,7 +38,7 @@ namespace ZenTween
 			TweenOneShotSequence(transform, POSITION, tweenSequence);
 		}
 
-		public static void TweenRotate(this TransformComponent transform, Quaternion rotation, float duration,
+		public static void TweenToRotation(this TransformComponent transform, Quaternion rotation, float duration,
 			EasingType easingType = EasingType.CubicInOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
 		{
 			var keyFrame = new TweenKeyFrame<Quaternion>(duration * FromSeconds, rotation, Easing.GetEasingFunction(easingType));
@@ -64,7 +64,7 @@ namespace ZenTween
 			TweenOneShotSequence(transform, ROTATION, tweenSequence);
 		}
 		
-		public static void TweenRotate(this CharacterComponent character, Quaternion rotation, float duration,
+		public static void TweenByRotation(this CharacterComponent character, Quaternion rotation, float duration,
 			EasingType easingType = EasingType.CubicOut, float delay = 0, System.Action onComplete = null, LerpFunction<Quaternion> lerpFunction = null)
 		{
 			var keyFrame = new TweenKeyFrame<Quaternion>(duration * FromSeconds, character.Orientation * rotation, Easing.GetEasingFunction(easingType));
